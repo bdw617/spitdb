@@ -1,6 +1,6 @@
 # SpitDB
 
-**S**ingle **P**oint **I**n **T**ime **D**ata**B**ase - A lightweight, in-memory time-series storage with full PromQL support.
+**S**ingle **P**oint **I**n **T**ime **D**ata**B**ase - A lightweight, in-memory not-time-series time-series storage with full PromQL support.
 
 ## What is SpitDB?
 
