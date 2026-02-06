@@ -19,10 +19,10 @@ But sometimes you need something simpler:
 |----------|-----------------|--------|
 | Store months of metrics | ✅ | ❌ |
 | Query historical trends | ✅ | ❌ |
-| On-demand metric aggregation | Overkill | ✅ |
-| Lightweight metric proxy | Complex | ✅ |
-| Point-in-time snapshots | Wasteful | ✅ |
-| Ephemeral aggregation pipelines | Complex | ✅ |
+| On-demand metric aggregation | More than you need | ✅ |
+| Lightweight metric proxy | Heavy setup | ✅ |
+| Point-in-time snapshots | Stores more than needed | ✅ |
+| Ephemeral aggregation pipelines | Heavy setup | ✅ |
 
 ### Perfect For
 
