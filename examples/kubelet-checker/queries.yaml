@@ -1,0 +1,81 @@
+queries:
+  # --- Problem detection (only surfaces when non-zero) ---
+
+  # DRA (Dynamic Resource Allocation) errors
+  - name: dra_errors
+    help: DRA operation errors by operation type
+    query: 'dra_operations_duration_seconds_count{is_error="true"} > 0'
+
+  # Orphaned pods (removed from config but still consuming resources)
+  - name: kubelet_orphaned_pods
+    help: Orphaned pods still tracked by kubelet
+    query: 'kubelet_working_pods{config="orphan"} > 0'
+
+  # Non-running containers (created/exited = potentially stuck or crashed)
+  - name: kubelet_nonrunning_containers
+    help: Containers in non-running state (created or exited)
+    query: 'kubelet_running_containers{container_state!="running"} > 0'
+
+  # Pod start errors
+  - name: kubelet_pod_start_errors
+    help: Errors encountered starting pods
+    query: "kubelet_started_pods_errors_total > 0"
+
+  # Resource manager errors
+  - name: kubelet_cpu_pinning_errors
+    help: CPU manager core allocation pinning failures
+    query: "kubelet_cpu_manager_pinning_errors_total > 0"
+
+  - name: kubelet_memory_pinning_errors
+    help: Memory manager page allocation pinning failures
+    query: "kubelet_memory_manager_pinning_errors_total > 0"
+
+  - name: kubelet_topology_errors
+    help: Topology manager admission failures
+    query: "kubelet_topology_manager_admission_errors_total > 0"
+
+  # Volume errors
+  - name: kubelet_volume_reconstruct_errors
+    help: Volumes that failed reconstruction during kubelet startup
+    query: "reconstruct_volume_operations_errors_total > 0"
+
+  - name: kubelet_volume_cleanup_errors
+    help: Volumes that failed force cleanup after reconstruction failure
+    query: "force_cleaned_failed_volume_operation_errors_total > 0"
+
+  # Certificate errors
+  - name: kubelet_cert_renew_errors
+    help: Certificate renewal errors
+    query: "kubelet_certificate_manager_client_expiration_renew_errors > 0"
+
+  # PLEG health
+  - name: kubelet_pleg_errors
+    help: PLEG streaming connection errors with CRI runtime
+    query: "kubelet_evented_pleg_connection_error_count > 0"
+
+  - name: kubelet_pleg_discards
+    help: PLEG discarded events
+    query: "kubelet_pleg_discard_events > 0"
+
+  # Orphaned runtime pods
+  - name: kubelet_orphaned_runtime_pods
+    help: Pods detected in container runtime without being known to pod worker
+    query: "kubelet_orphaned_runtime_pods_total > 0"
+
+  # --- Summary context (always shown) ---
+
+  - name: kubelet_node
+    help: Node identity
+    query: "kubelet_node_name"
+
+  - name: kubelet_pods_running
+    help: Number of pods with a running sandbox
+    query: "kubelet_running_pods"
+
+  - name: kubelet_containers_by_state
+    help: Container count by state
+    query: "kubelet_running_containers"
+
+  - name: kubelet_cert_ttl_seconds
+    help: Seconds until kubelet client certificate expires
+    query: "kubelet_certificate_manager_client_ttl_seconds"
