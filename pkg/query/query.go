@@ -54,6 +54,10 @@ type Result struct {
 	Value  float64
 }
 
+func (e *Engine) Query(ctx context.Context, queryable storage.Queryable, query string) ([]Result, error) {
+	return e.QueryAt(ctx, queryable, query, time.Now())
+}
+
 // Query executes a PromQL instant query against the given queryable storage
 // and returns the results.
 //
@@ -63,49 +67,6 @@ type Result struct {
 //   - Functions: rate, increase, histogram_quantile, etc.
 //   - Binary operators: +, -, *, /, etc.
 //   - Group modifiers: by, without
-func (e *Engine) Query(ctx context.Context, queryable storage.Queryable, query string) ([]Result, error) {
-	now := time.Now()
-	q, err := e.engine.NewInstantQuery(ctx, queryable, nil, query, now)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create query: %w", err)
-	}
-	defer q.Close()
-
-	res := q.Exec(ctx)
-	if res.Err != nil {
-		return nil, fmt.Errorf("query execution failed: %w", res.Err)
-	}
-
-	var results []Result
-	switch v := res.Value.(type) {
-	case promql.Vector:
-		for _, sample := range v {
-			results = append(results, Result{
-				Labels: sample.Metric.DropReserved(schema.IsMetadataLabel).Map(),
-				Value:  sample.F,
-			})
-		}
-	case promql.Scalar:
-		results = append(results, Result{
-			Labels: nil,
-			Value:  v.V,
-		})
-	case promql.Matrix:
-		// For matrix results, get the latest value from each series
-		for _, series := range v {
-			if len(series.Floats) > 0 {
-				lastPoint := series.Floats[len(series.Floats)-1]
-				results = append(results, Result{
-					Labels: series.Metric.DropReserved(schema.IsMetadataLabel).Map(),
-					Value:  lastPoint.F,
-				})
-			}
-		}
-	}
-	return results, nil
-}
-
-// QueryAt executes a PromQL instant query at a specific timestamp.
 func (e *Engine) QueryAt(ctx context.Context, queryable storage.Queryable, query string, ts time.Time) ([]Result, error) {
 	q, err := e.engine.NewInstantQuery(ctx, queryable, nil, query, ts)
 	if err != nil {
