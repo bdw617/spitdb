@@ -79,7 +79,7 @@ func exampleGetSamplesfromFile(metricsFile string) []db.Sample { // for relative
 		log.Fatalf("opening metrics: %v", err)
 	}
 	defer f.Close()
-	samples := parser.ParsePrometheus(f)
+	samples := parser.ParsePrometheus(f, labels.EmptyLabels())
 	return samples
 }
 

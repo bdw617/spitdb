@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/bdw617/spitdb/pkg/db"
+	"github.com/prometheus/prometheus/model/labels"
 )
 
 // find returns the first sample whose labels match all key/value pairs, or nil.
@@ -32,7 +33,7 @@ http_requests_total{method="POST",code="201"} 50
 `
 
 func TestParsePrometheus_Counter(t *testing.T) {
-	samples := ParsePrometheus(strings.NewReader(counterInput))
+	samples := ParsePrometheus(strings.NewReader(counterInput), labels.EmptyLabels())
 	if len(samples) != 2 {
 		t.Fatalf("expected 2 samples, got %d", len(samples))
 	}
@@ -64,7 +65,7 @@ rpc_duration_seconds_count 15
 `
 
 func TestParsePrometheus_Histogram(t *testing.T) {
-	samples := ParsePrometheus(strings.NewReader(histogramInput))
+	samples := ParsePrometheus(strings.NewReader(histogramInput), labels.EmptyLabels())
 	// 3 buckets + _sum + _count
 	if len(samples) != 5 {
 		t.Fatalf("expected 5 samples, got %d", len(samples))
@@ -102,7 +103,7 @@ go_gc_duration_seconds_count 42
 `
 
 func TestParsePrometheus_Summary(t *testing.T) {
-	samples := ParsePrometheus(strings.NewReader(summaryInput))
+	samples := ParsePrometheus(strings.NewReader(summaryInput), labels.EmptyLabels())
 	// 3 quantiles + _sum + _count
 	if len(samples) != 5 {
 		t.Fatalf("expected 5 samples, got %d", len(samples))
@@ -126,9 +127,25 @@ func TestParsePrometheus_Summary(t *testing.T) {
 }
 
 func TestParsePrometheus_Empty(t *testing.T) {
-	samples := ParsePrometheus(strings.NewReader(""))
+	samples := ParsePrometheus(strings.NewReader(""), labels.EmptyLabels())
 	if len(samples) != 0 {
 		t.Errorf("expected 0 samples, got %d", len(samples))
+	}
+}
+
+func TestParsePrometheus_ExtraLabels(t *testing.T) {
+	extra := labels.FromMap(map[string]string{"node": "host-1", "region": "us-east"})
+	samples := ParsePrometheus(strings.NewReader(counterInput), extra)
+	if len(samples) != 2 {
+		t.Fatalf("expected 2 samples, got %d", len(samples))
+	}
+	for _, s := range samples {
+		if s.Labels.Get("node") != "host-1" {
+			t.Errorf("expected node=host-1, got %q", s.Labels.Get("node"))
+		}
+		if s.Labels.Get("region") != "us-east" {
+			t.Errorf("expected region=us-east, got %q", s.Labels.Get("region"))
+		}
 	}
 }
 
@@ -139,7 +156,7 @@ func TestParsePrometheus_KubeletFile(t *testing.T) {
 	}
 	defer f.Close()
 
-	samples := ParsePrometheus(f)
+	samples := ParsePrometheus(f, labels.EmptyLabels())
 	if len(samples) == 0 {
 		t.Fatal("expected samples from kubelet metrics file, got none")
 	}
@@ -165,3 +182,4 @@ func TestParsePrometheus_KubeletFile(t *testing.T) {
 		}
 	}
 }
+

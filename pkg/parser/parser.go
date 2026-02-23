@@ -10,8 +10,10 @@ import (
 	"github.com/prometheus/prometheus/model/labels"
 )
 
-// parseMetrics parses Prometheus exposition format into SpitDB samples.
-func ParsePrometheus(r io.Reader) []db.Sample {
+// ParsePrometheus parses Prometheus exposition format into SpitDB samples.
+// extra labels are merged into every sample, useful for adding identifying
+// labels like node="host-1" when ingesting from multiple sources.
+func ParsePrometheus(r io.Reader, extra labels.Labels) []db.Sample {
 	// NOTE: can we tell the Decoder to only include a subset of __name__'s?
 	dec := &expfmt.SampleDecoder{
 		Dec:  expfmt.NewDecoder(r, expfmt.NewFormat(expfmt.TypeTextPlain)),
@@ -34,6 +36,9 @@ func ParsePrometheus(r io.Reader) []db.Sample {
 			for k, v := range s.Metric {
 				b.Add(string(k), string(v))
 			}
+			extra.Range(func(l labels.Label) {
+				b.Add(l.Name, l.Value)
+			})
 			b.Sort()
 			samples = append(samples, db.Sample{
 				Labels: b.Labels(),
